@@ -1,33 +1,42 @@
-name: CI/CD Pipeline
+name: Flutter CI
 
 on:
   push:
     branches:
-      - main  # Trigger the workflow on push to the main branch
+      - main
   pull_request:
     branches:
-      - main  # Trigger on pull requests to main branch
+      - main
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        platform: [macos-latest, ubuntu-latest]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        
-      - name: Set up Node.js (if using Node.js)
-        uses: actions/setup-node@v2
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          node-version: '14'
-      
+          flutter-version: 'stable'
+
       - name: Install dependencies
-        run: npm install
-      
+        run: flutter pub get
+
       - name: Run tests
-        run: npm test
-      
-      - name: Build the project
-        run: npm run build
-      
-      - name: Deploy (you can use a deploy action for your platform)
-        run: echo "Deploy step goes here"
+        run: flutter test
+
+      - name: Build APK (Android)
+        if: matrix.platform == 'ubuntu-latest'
+        run: flutter build apk --release
+
+      - name: Build iOS (iOS)
+        if: matrix.platform == 'macos-latest'
+        run: flutter build ios --release
+
